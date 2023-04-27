@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+    
+</body>
+</html>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.4/jquery.min.js" integrity="sha512-pumBsjNRGGqkPzKHndZMaAG+bir374sORyzM3uulLV14lN5LyykqNk8eEeUlUkB3U0M4FApyaHraT65ihJhDpQ==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<script>
+var base64_authorization = "codigo",
+    base64_authorization_sandbox = "codigo",
+    client_id = "codigo",
+    client_id_sandbox = "codigo",
+    url_fundo = "https://api.anbima.com.br/feed/fundos/v1/fundos/",
+    url_fundo_sandbox = "https://api-sandbox.anbima.com.br/feed/fundos/v1/fundos/",
+    url_grafico_fundo = "https://api.anbima.com.br/feed/fundos/v1/fundos/" + id_fundo + "/serie-historica",
+    url_grafico_fundo_sandbox = "https://api-sandbox.anbima.com.br/feed/fundos/v1/fundos/" + id_fundo + "/serie-historica",
+    post_grant = { grant_type: "client_credentials" };
+function formatCURRENCY(e) {
+    return e.toLocaleString("pt-BR", { minimumFractionDigits: 2, style: "currency", currency: "BRL" });
+}
+function formatCURRENCYLONG(e) {
+    return e.toLocaleString("pt-BR", { minimumFractionDigits: 8, style: "currency", currency: "BRL" });
+}
+function formatCNPJ(e) {
+    return e.replace(/^(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})/, "../-");
+}
+function formatDATE(e) {
+    var a = new Date(e + " 00:00:00");
+    return ("0" + a.getDate()).slice(-2) + "/" + ("0" + (a.getMonth() + 1)).slice(-2) + "/" + a.getFullYear();
+}
+function formatDATETIME(e) {
+    var a = new Date(e);
+    return ("0" + a.getDate()).slice(-2) + "/" + ("0" + (a.getMonth() + 1)).slice(-2) + "/" + a.getFullYear() + " " + ("0" + a.getHours()).slice(-2) + ":" + ("0" + a.getMinutes()).slice(-2) + ":" + ("0" + a.getSeconds()).slice(-2);
+}
+function formatPERCENT(e) {
+    return parseFloat(e).toFixed(2) + "%";
+}
+function getMonthDifference(startDate, endDate) {
+    return endDate.getMonth() - startDate.getMonth() + 12 * (endDate.getFullYear() - startDate.getFullYear());
+}
+function calc(value) {
+    var num,
+        with2Decimals = value.toString().match(/^-?\d+(?:\.\d{0,2})?/)[0];
+    return parseFloat(with2Decimals);
+}
+$(document).ready(function () {
+    $.ajax({
+        url: "https://api.anbima.com.br/oauth/access-token",
+        type: "POST",
+        data: JSON.stringify({ grant_type: "client_credentials" }),
+        headers: { Authorization: "Basic " + atob(1 == sandbox ? base64_authorization_sandbox : base64_authorization), "Content-Type": "application/json" },
+        dataType: "json",
+        success: function (e) {
+            var a = e.access_token;
+            $.ajax({
+                url: 1 == sandbox ? url_fundo_sandbox + id_fundo : url_fundo + id_fundo,
+                type: "GET",
+                headers: { client_id: atob(1 == sandbox ? client_id_sandbox : client_id), access_token: a },
+                success: function (e) {
+                    var t = e["dados-cadastrais"].data_primeiro_aporte,
+                        primeiro_deposito = e["dados-cadastrais"].data_primeiro_aporte;
+                    for (var o in (console.log(primeiro_deposito), e["dados-cadastrais"])) $("#" + o).html(e["dados-cadastrais"][o]);
+                    for (var o in e.documentos)
+                        if ("object" == typeof e.documentos[o])
+                            for (var r in e.documentos[o])
+                                if ("object" == typeof e.documentos[o][r]) for (var i in e.documentos[o][r]) $("#documentos_" + o + "_" + i).html(e.documentos[o][r][i]);
+                                else "url" == r ? $("#documentos_" + o + "_" + r).attr("href", e.documentos[o][r]) : $("#documentos_" + o + "_" + r).html(e.documentos[o][r]);
+                        else $("#documentos_" + o).html(e.documentos[o]);
+                    for (var o in e["dados-cadastrais"]) $("#" + o).html(e["dados-cadastrais"][o]);
+                    for (var o in e.historico_taxas) $("#" + o).html(e.historico_taxas[o]);
+                    for (var o in e.movimentacao)
+                        if ("object" == typeof e.movimentacao[o])
+                            for (var r in e.movimentacao[o])
+                                if ("object" == typeof e.movimentacao[o][r]) for (var i in e.movimentacao[o][r]) $("#movimentacao_" + o + "_" + i).html(e.movimentacao[o][r][i]);
+                                else $("#movimentacao_" + o + "_" + r).html(e.movimentacao[o][r]);
+                        else $("#movimentacao_" + o).html(e.movimentacao[o]);
+                    for (var o in e.prestadores)
+                        if ("object" == typeof e.prestadores[o])
+                            for (var r in e.prestadores[o])
+                                if ("object" == typeof e.prestadores[o][r]) for (var i in e.prestadores[o][r]) $("#prestadores_" + o + "_" + i).html(e.prestadores[o][r][i]);
+                                else $("#prestadores_" + o + "_" + r).html(e.prestadores[o][r]);
+                        else $("#prestadores_" + o).html(e.prestadores[o]);
+                    for (var o in e.serie_historica)
+                        if ("object" == typeof e.serie_historica[o])
+                            for (var r in e.serie_historica[o])
+                                if ("object" == typeof e.serie_historica[o][r]) for (var i in e.serie_historica[o][r]) $("#serie_historica_" + o + "_" + i).html(e.serie_historica[o][r][i]);
+                                else $("#serie_historica_" + o + "_" + r).html(e.serie_historica[o][r]);
+                        else $("#serie_historica_" + o).html(e.serie_historica[o]);
+                    for (var o in e.taxas)
+                        if ("object" == typeof e.taxas[o])
+                            for (var r in e.taxas[o])
+                                if ("object" == typeof e.taxas[o][r]) for (var i in e.taxas[o][r]) $("#taxas_" + o + "_" + i).html(e.taxas[o][r][i]);
+                                else $("#taxas_" + o + "_" + r).html(e.taxas[o][r]);
+                        else $("#taxas_" + o).html(e.taxas[o]);
+                    $.ajax({
+                        url: 1 == sandbox ? url_grafico_fundo_sandbox : url_grafico_fundo,
+                        type: "GET",
+                        headers: { client_id: atob(1 == sandbox ? client_id_sandbox : client_id), access_token: a },
+                        success: function (e) {
+                            var a = [],
+                                o = e.serie_historica.length - 1,
+                                r = 100 * (e.serie_historica[0].valor_cota - 1),
+                                i = 100 * (e.serie_historica[o].valor_cota - 1),
+                                table = [];
+                            if ("631019" == id_fundo || "633021" == id_fundo) var tabletypes = ["fundo", "cdi"];
+                            if ("587133" == id_fundo || "608866" == id_fundo) var tabletypes = ["fundo", "cdi", "cdi2"];
+                            for (var s = 1; s <= o; s++) {
+                                a.push({ x: e.serie_historica[s].data_referencia, y: (100 * (parseFloat(e.serie_historica[s].valor_cota) - 1)).toFixed(2) });
+                                var date = e.serie_historica[s].data_referencia.split("-");
+                                if (void 0 === table[date[0]]) for (var typei in ((table[date[0]] = []), tabletypes)) table[date[0]][tabletypes[typei]] = [];
+                                void 0 === table[date[0]].fundo[date[1]] &&
+                                    ((table[date[0]].fundo[date[1]] = parseFloat(e.serie_historica[s].valor_cota)),
+                                    console.log(date[0] + "-" + date[1], e.serie_historica[s].valor_cota, parseFloat(e.serie_historica[s].valor_cota), table[date[0]].fundo[date[1]]));
+                            }
+                            var n = t.split("-"),
+                                c = new Date();
+                            c.setDate(c.getDate() - 2);
+                            var d = ("0" + (c.getDate() + 1)).slice(-2) + "/" + ("0" + (c.getMonth() + 1)).slice(-2) + "/" + c.getFullYear();
+                            $.get("https://api.bcb.gov.br/dados/serie/bcdata.sgs.12/dados?formato=json&dataInicial=01/" + n[1] + "/" + n[0] + "&dataFinal=" + d, function (t) {
+                                "string" == typeof t && (t = JSON.parse(t));
+                                var o = [],
+                                    s = [],
+                                    n = 1,
+                                    c = 0,
+                                    d = [];
+                                d.push(n);
+                                var l = 1,
+                                    m = 0;
+                                d.push(l);
+                                for (var first_cdi_value = 0, last_cdi_value_month = 1, first_cdi_value_2 = 0, last_cdi_value_month_2 = 1, h = t.length - 1, u = 0; u <= h - 1; u++) {
+                                    var f = (D = t[u].data.split("/"))[2] + "-" + D[1] + "-" + D[0],
+                                        _ = 1 + parseFloat(t[u].valor) / 100;
+                                    (n *= _), d.push(n), (c = n), (m = l *= _ * por_aa), o.push({ x: f, y: (100 * (n - 1)).toFixed(2) }), s.push({ x: f, y: (100 * (l - 1)).toFixed(2) });
+                                    var date = D;
+                                    void 0 === table[date[2]].cdi[date[1]]
+                                        ? (table[date[2]].cdi[date[1]] = (1 + parseFloat(t[u].valor) / 100) * last_cdi_value_month)
+                                        : (table[date[2]].cdi[date[1]] = table[date[2]].cdi[date[1]] * (1 + parseFloat(t[u].valor) / 100)),
+                                        (last_cdi_value_month = table[date[2]].cdi[date[1]]);
+                                    var ddd1 = new Date(primeiro_deposito),
+                                        ddd2 = new Date(date[2] + "-" + date[1] + "-" + date[0]);
+                                    ddd1.getFullYear() == ddd2.getFullYear() && ddd1.getMonth() == ddd2.getMonth() && ddd1.getDate() > ddd2.getDate() && (first_cdi_value = table[date[2]].cdi[date[1]]),
+                                        void 0 !== table[date[2]].cdi2 && (table[date[2]].cdi2[date[1]], (table[date[2]].cdi2[date[1]] = m)),
+                                        (last_cdi_value_month_2 = l),
+                                        ddd1.getFullYear() == ddd2.getFullYear() && ddd1.getMonth() == ddd2.getMonth() && ddd1.getDate() > ddd2.getDate() && (first_cdi_value_2 = m);
+                                }
+                                console.log("yyy", table);
+                                var percent_over_cdi = [],
+                                    htmltable = "";
+                                for (var index in table)
+                                    for (var typei in (void 0 === percent_over_cdi[index] && (percent_over_cdi[index] = []), tabletypes)) {
+                                        "fundo" == tabletypes[typei] ? (htmltable += "<tr class='linha-fundo'>") : (htmltable += "<tr>"),
+                                            "fundo" == tabletypes[typei] && (htmltable += "<td rowspan='" + tabletypes.length + "'>" + index + "</td>"),
+                                            "fundo" == tabletypes[typei] && (htmltable += "<td >Fundo</td>"),
+                                            "cdi" == tabletypes[typei] && (htmltable += "<td>CDI</td>"),
+                                            "cdi2" == tabletypes[typei] && ("608866" == id_fundo ? (htmltable += "<td>CDI + 5%a.a.</td>") : (htmltable += "<td>CDI + 2%a.a.</td>"));
+                                        for (var yearsum = 0, m = 1; m <= 12; m++)
+                                            if (void 0 === table[index][tabletypes[typei]][("0" + m).slice(-2)]) htmltable += "<td>-</td>";
+                                            else {
+                                                var print_value = 0;
+                                                if (void 0 === table[index][tabletypes[typei]][("0" + (m - 1)).slice(-2)] && m > 1)
+                                                    print_value =
+                                                        "fundo" == tabletypes[typei]
+                                                            ? 100 * (table[index][tabletypes[typei]][("0" + m).slice(-2)] - 1)
+                                                            : 100 * (table[index][tabletypes[typei]][("0" + m).slice(-2)] / ("cdi" == tabletypes[typei] ? first_cdi_value : first_cdi_value_2) - 1);
+                                                else if (1 == m && void 0 !== table[index - 1][tabletypes[typei]][12]) {
+                                                    var before = table[index - 1][tabletypes[typei]][12],
+                                                        thismonth = table[index][tabletypes[typei]][("0" + m).slice(-2)];
+                                                    print_value = (tabletypes[typei], 100 * (thismonth / before - 1));
+                                                } else {
+                                                    var before = table[index][tabletypes[typei]][("0" + (m - 1)).slice(-2)],
+                                                        thismonth = table[index][tabletypes[typei]][("0" + m).slice(-2)];
+                                                    print_value = (tabletypes[typei], 100 * (thismonth / before - 1));
+                                                }
+                                                console.log(print_value, thismonth, before), (htmltable += "<td>" + print_value.toFixed(2) + "%</td>"), 0 == yearsum ? (yearsum = 1 + print_value / 100) : (yearsum *= 1 + print_value / 100);
+                                            }
+                                        (percent_over_cdi[index][tabletypes[typei]] = parseFloat((100 * (yearsum - 1)).toFixed(2))),
+                                            (htmltable += "<td id='ano_" + index + "_" + tabletypes[typei] + "'>" + (100 * (yearsum - 1)).toFixed(2) + "%</td>"),
+                                            "cdi" == tabletypes[typei] ? (htmltable += "<td>100%</td>") : (htmltable += "<td id='percent_" + index + "_" + tabletypes[typei] + "'>0%</td>"),
+                                            (htmltable += "</tr>");
+                                    }
+                                for (var index in ($("#monthly").html(htmltable), console.log(percent_over_cdi), table))
+                                    $("#percent_" + index + "_fundo").html(((100 * percent_over_cdi[index].fundo) / percent_over_cdi[index].cdi).toFixed(2) + "%"),
+                                        void 0 !== table[index].cdi2 && $("#percent_" + index + "_cdi2").html(((100 * percent_over_cdi[index].cdi2) / percent_over_cdi[index].cdi).toFixed(2) + "%");
+                                var p = [
+                                    { name: "Rentabilidade", data: a },
+                                    { name: "CDI", data: o },
+                                    { name: "CDI + 2 a.a.", data: s },
+                                ];
+                                "608866" == id_fundo &&
+                                    (p = [
+                                        { name: "Rentabilidade", data: a },
+                                        { name: "CDI", data: o },
+                                        { name: "CDI + 5 a.a.", data: s },
+                                    ]),
+                                    ("633021" != id_fundo && "631019" != id_fundo) ||
+                                        (p = [
+                                            { name: "Rentabilidade", data: a },
+                                            { name: "CDI", data: o },
+                                        ]);
+                                var v = {
+                                    series: p,
+                                    chart: {
+                                        height: 300,
+                                        type: "line",
+                                        zoom: { enabled: !1 },
+                                        locales: [
+                                            {
+                                                name: "en",
+                                                options: {
+                                                    months: ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"],
+                                                    shortMonths: ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"],
+                                                    days: ["Domingo", "Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"],
+                                                    shortDays: ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sab"],
+                                                    toolbar: {
+                                                        exportToSVG: "Baixar SVG",
+                                                        exportToPNG: "Baixar PNG",
+                                                        menu: "Menu",
+                                                        selection: "Seleção",
+                                                        selectionZoom: "Seleção Zoom",
+                                                        zoomIn: "Zoom In",
+                                                        zoomOut: "Zoom Out",
+                                                        pan: "Panning",
+                                                        reset: "Resetar Zoom",
+                                                    },
+                                                },
+                                            },
+                                        ],
+                                        defaultLocale: "en",
+                                    },
+                                    dataLabels: { enabled: !1 },
+                                    stroke: { curve: "straight", width: 2 },
+                                    colors: ["#006eff", "#fcbe03", "#a1128e"],
+                                    title: { text: "Rentabilidade diária", align: "center" },
+                                    grid: { row: { colors: ["#f3f3f3", "transparent"], opacity: 0.5 } },
+                                    xaxis: { type: "datetime", labels: { format: "dd/MMM" } },
+                                    tooltip: {
+                                        y: {
+                                            formatter: function (e, a) {
+                                                return e.toFixed(2) + "%";
+                                            },
+                                        },
+                                    },
+                                };
+                                new ApexCharts(document.querySelector("#chart-line"), v).render();
+                                for (var b = [], x = [], g = new Date(), y = g.getFullYear() + "-" + ("0" + (g.getMonth() + 1)).slice(-2), F = e.serie_historica.length - 1; F > 0; F--) {
+                                    var D,
+                                        R = (D = new Date(e.serie_historica[F].data_referencia)).getFullYear() + "-" + ("0" + (D.getMonth() + 1)).slice(-2);
+                                    R != y && ((b[e.serie_historica[F].data_referencia] = e.serie_historica[F]), (x[R] = { mes: ("0" + (D.getMonth() + 1)).slice(-2), ano: D.getFullYear() }));
+                                }
+                                var C = 1,
+                                    S = [],
+                                    T = 0,
+                                    E = 0,
+                                    M = 0;
+                                for (var j in x) {
+                                    for (var N = 31; N > 0; N--)
+                                        if (void 0 !== b[j + "-" + N]) {
+                                            var z = parseFloat(b[j + "-" + N].valor_cota),
+                                                V = (100 * (z / C - 1)).toFixed(2);
+                                            (S[j + "-" + N] = { valor_cota: z, rendimento: V }), V > 0 && (E += 1), (C = z);
+                                            break;
+                                        }
+                                    T += 1;
+                                }
+                                M = r;
+                                var Y = ((E / T) * 100).toFixed(0),
+                                    k = ((parseFloat(M / 100) / (c - 1)) * 100).toFixed(2),
+                                    w = ((parseFloat(M / 100) / (m - 1)) * 100).toFixed(2);
+                                (v = {
+                                    series: [Y],
+                                    chart: { height: 130, type: "radialBar" },
+                                    plotOptions: { radialBar: { hollow: { margin: 15, size: "70%" }, dataLabels: { name: { show: !1, color: "#fff" }, value: { show: !0, color: "#333", offsetY: 8, fontSize: "22px" } } } },
+                                    fill: { type: "color", colors: ["#ab8b51"] },
+                                    stroke: { lineCap: "round" },
+                                }),
+                                    new ApexCharts(document.querySelector("#chart"), v).render(),
+                                    $("#retorno_inicio").html(M.toFixed(2) + "%"),
+                                    $("#inicio").html(i.toFixed(2) + "%"),
+                                    $("#total_meses").html(T + " meses"),
+                                    $("#desempenho_cdi").html(k + "%"),
+                                    $("#desempenho_benchmark").html(w + "%"),
+                                    $(".copy").each(function () {
+                                        var e = $(this).attr("data-copy-id"),
+                                            a = $("#" + e).html();
+                                        $(this).html(a), console.log(e, a);
+                                    }),
+                                    $(".cnpj").each(function () {
+                                        var e = $(this).html();
+                                        $(this).html(formatCNPJ(e));
+                                    }),
+                                    $(".datetime").each(function () {
+                                        var e = $(this).html();
+                                        $(this).html(formatDATETIME(e));
+                                    }),
+                                    $(".date").each(function () {
+                                        var e = $(this).html();
+                                        $(this).html(formatDATE(e));
+                                    }),
+                                    $(".currency").each(function () {
+                                        var e = parseFloat($(this).html());
+                                        $(this).html(formatCURRENCY(e));
+                                    }),
+                                    $(".currency_long").each(function () {
+                                        var e = parseFloat($(this).html());
+                                        $(this).html(formatCURRENCYLONG(e));
+                                    }),
+                                    $(".percent").each(function () {
+                                        var e = parseFloat($(this).html());
+                                        $(this).html(formatPERCENT(e));
+                                    });
+                            });
+                        },
+                        error: function (e) {
+                            console.log(e);
+                        },
+                    });
+                },
+                error: function (e) {
+                    console.log(e);
+                },
+            });
+            var c = 1;
+            for (var i in id_fundo_outros)
+                $.ajax({
+                    url: 1 == sandbox ? url_fundo_sandbox + id_fundo_outros[i] : url_fundo + id_fundo_outros[i],
+                    type: "GET",
+                    headers: { client_id: atob(1 == sandbox ? client_id_sandbox : client_id), access_token: a },
+                    success: function (response) {
+                        console.log(response), console.log(c);
+                        var nome = response["dados-cadastrais"].nome_fantasia.split(" ");
+                        $("#fundo_" + c + "_nome").html(nome[0] + " " + nome[1] + " " + nome[2] + " " + nome[3]),
+                            $("#fundo_" + c + "_inicial").html(response.movimentacao.aplicacao_inicial_minima.toLocaleString("pt-BR", { minimumFractionDigits: 2, style: "currency", currency: "BRL" })),
+                            $("#fundo_" + c + "_meses").html(getMonthDifference(new Date(response["dados-cadastrais"].data_inicio), new Date()) + " meses"),
+                            $("#fundo_" + c + "_retorno").html((100 * (parseFloat(response.serie_historica.valor_cota) - 1)).toFixed(2) + "%"),
+                            c++;
+                    },
+                    error: function (e) {
+                        console.log(e);
+                    },
+                });
+        },
+        error: function (e) {
+            console.log(e);
+        },
+    });
+});
+var sandbox = false;
+	var id_fundo = "608866";
+	var por_aa = 1.000194;
+	var id_fundo_outros = ["633021", "631019", "587133"];
+</script>
